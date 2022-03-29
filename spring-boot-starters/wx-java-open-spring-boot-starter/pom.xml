@@ -6,6 +6,7 @@
     <artifactId>wx-java-spring-boot-starters</artifactId>
     <groupId>com.github.binarywang</groupId>
     <version>3.9.0p1</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 

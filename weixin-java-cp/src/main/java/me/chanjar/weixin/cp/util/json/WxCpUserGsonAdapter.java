@@ -130,7 +130,11 @@ public class WxCpUserGsonAdapter implements JsonDeserializer<WxCpUser>, JsonSeri
   }
 
   private void buildExternalAttrs(JsonObject o, WxCpUser user) {
-    JsonArray attrJsonElements = o.get(EXTERNAL_PROFILE).getAsJsonObject().get(EXTERNAL_ATTR).getAsJsonArray();
+    JsonElement jsonExternalAttr = o.get(EXTERNAL_PROFILE).getAsJsonObject().get(EXTERNAL_ATTR);
+    if (jsonExternalAttr == null) {
+      return;
+    }
+    JsonArray attrJsonElements = jsonExternalAttr.getAsJsonArray();
     for (JsonElement element : attrJsonElements) {
       final Integer type = GsonHelper.getInteger(element.getAsJsonObject(), "type");
       final String name = GsonHelper.getString(element.getAsJsonObject(), "name");
