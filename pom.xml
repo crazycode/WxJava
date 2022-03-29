@@ -104,7 +104,7 @@
   </scm>
 
   <modules>
-    <module>weixin-graal</module>
+<!--    <module>weixin-graal</module>-->
     <module>weixin-java-common</module>
     <module>weixin-java-cp</module>
     <module>weixin-java-mp</module>
@@ -277,11 +277,11 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>local</id>
+      <id>central</id>
       <url>file:///Users/tanglq/bayrand/maven-repository/public</url>
     </snapshotRepository>
     <repository>
-      <id>local</id>
+      <id>central</id>
       <url>file:///Users/tanglq/bayrand/maven-repository/public</url>
     </repository>
   </distributionManagement>
