@@ -101,7 +101,11 @@ public class WxCpUserGsonAdapter implements JsonDeserializer<WxCpUser>, JsonSeri
   }
 
   private void buildExtraAttrs(JsonObject o, WxCpUser user) {
-    JsonArray attrJsonElements = o.get(EXTRA_ATTR).getAsJsonObject().get("attrs").getAsJsonArray();
+    JsonElement attrsElement = o.get(EXTRA_ATTR).getAsJsonObject().get("attrs");
+    if (attrsElement == null) {
+      return;
+    }
+    JsonArray attrJsonElements = attrsElement.getAsJsonArray();
     for (JsonElement attrJsonElement : attrJsonElements) {
       final Integer type = GsonHelper.getInteger(attrJsonElement.getAsJsonObject(), "type");
       final WxCpUser.Attr attr = new WxCpUser.Attr().setType(type)
@@ -115,13 +119,19 @@ public class WxCpUserGsonAdapter implements JsonDeserializer<WxCpUser>, JsonSeri
 
       switch (type) {
         case 0: {
-          attr.setTextValue(GsonHelper.getString(attrJsonElement.getAsJsonObject().get("text").getAsJsonObject(), "value"));
+          JsonElement text = attrJsonElement.getAsJsonObject().get("text");
+          if (text != null) {
+            attr.setTextValue(GsonHelper.getString(text.getAsJsonObject(), "value"));
+          }
           break;
         }
         case 1: {
-          final JsonObject web = attrJsonElement.getAsJsonObject().get("web").getAsJsonObject();
-          attr.setWebTitle(GsonHelper.getString(web, "title"))
-            .setWebUrl(GsonHelper.getString(web, "url"));
+          JsonElement webElement = attrJsonElement.getAsJsonObject().get("web");
+          if (webElement != null) {
+            final JsonObject web = webElement.getAsJsonObject();
+            attr.setWebTitle(GsonHelper.getString(web, "title"))
+              .setWebUrl(GsonHelper.getString(web, "url"));
+          }
           break;
         }
         default://ignored
@@ -145,38 +155,49 @@ public class WxCpUserGsonAdapter implements JsonDeserializer<WxCpUser>, JsonSeri
 
       switch (type) {
         case 0: {
-          user.getExternalAttrs()
-            .add(WxCpUser.ExternalAttribute.builder()
-              .type(type)
-              .name(name)
-              .value(GsonHelper.getString(element.getAsJsonObject().get("text").getAsJsonObject(), "value"))
-              .build()
-            );
+          JsonElement text = element.getAsJsonObject().get("text");
+          if (text != null) {
+            user.getExternalAttrs()
+              .add(WxCpUser.ExternalAttribute.builder()
+                .type(type)
+                .name(name)
+                .value(GsonHelper.getString(text.getAsJsonObject(), "value"))
+                .build()
+              );
+          }
           break;
         }
         case 1: {
-          final JsonObject web = element.getAsJsonObject().get("web").getAsJsonObject();
-          user.getExternalAttrs()
-            .add(WxCpUser.ExternalAttribute.builder()
-              .type(type)
-              .name(name)
-              .url(GsonHelper.getString(web, "url"))
-              .title(GsonHelper.getString(web, "title"))
-              .build()
-            );
+          JsonElement webElement = element.getAsJsonObject().get("web");
+          if (webElement != null) {
+            final JsonObject web = webElement.getAsJsonObject();
+            if (web != null) {
+              user.getExternalAttrs()
+                .add(WxCpUser.ExternalAttribute.builder()
+                  .type(type)
+                  .name(name)
+                  .url(GsonHelper.getString(web, "url"))
+                  .title(GsonHelper.getString(web, "title"))
+                  .build()
+                );
+            }
+          }
           break;
         }
         case 2: {
-          final JsonObject miniprogram = element.getAsJsonObject().get("miniprogram").getAsJsonObject();
-          user.getExternalAttrs()
-            .add(WxCpUser.ExternalAttribute.builder()
-              .type(type)
-              .name(name)
-              .appid(GsonHelper.getString(miniprogram, "appid"))
-              .pagePath(GsonHelper.getString(miniprogram, "pagepath"))
-              .title(GsonHelper.getString(miniprogram, "title"))
-              .build()
-            );
+          JsonElement miniprogramElement = element.getAsJsonObject().get("miniprogram");
+          if (miniprogramElement != null) {
+            final JsonObject miniprogram = miniprogramElement.getAsJsonObject();
+            user.getExternalAttrs()
+              .add(WxCpUser.ExternalAttribute.builder()
+                .type(type)
+                .name(name)
+                .appid(GsonHelper.getString(miniprogram, "appid"))
+                .pagePath(GsonHelper.getString(miniprogram, "pagepath"))
+                .title(GsonHelper.getString(miniprogram, "title"))
+                .build()
+              );
+          }
           break;
         }
         default://ignored
