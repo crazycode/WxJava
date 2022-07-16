@@ -22,15 +22,39 @@ import me.chanjar.weixin.common.session.WxSessionManager;
 import me.chanjar.weixin.common.util.DataUtils;
 import me.chanjar.weixin.common.util.RandomUtils;
 import me.chanjar.weixin.common.util.crypto.SHA1;
-import me.chanjar.weixin.common.util.http.*;
+import me.chanjar.weixin.common.util.http.RequestExecutor;
+import me.chanjar.weixin.common.util.http.RequestHttp;
+import me.chanjar.weixin.common.util.http.SimpleGetRequestExecutor;
+import me.chanjar.weixin.common.util.http.SimplePostRequestExecutor;
+import me.chanjar.weixin.common.util.http.URIUtil;
 import me.chanjar.weixin.common.util.json.GsonParser;
 import me.chanjar.weixin.common.util.json.WxGsonBuilder;
-import me.chanjar.weixin.mp.api.*;
+import me.chanjar.weixin.mp.api.WxMpAiOpenService;
+import me.chanjar.weixin.mp.api.WxMpCardService;
+import me.chanjar.weixin.mp.api.WxMpCommentService;
+import me.chanjar.weixin.mp.api.WxMpDataCubeService;
+import me.chanjar.weixin.mp.api.WxMpDeviceService;
+import me.chanjar.weixin.mp.api.WxMpKefuService;
+import me.chanjar.weixin.mp.api.WxMpMarketingService;
+import me.chanjar.weixin.mp.api.WxMpMassMessageService;
+import me.chanjar.weixin.mp.api.WxMpMaterialService;
+import me.chanjar.weixin.mp.api.WxMpMemberCardService;
+import me.chanjar.weixin.mp.api.WxMpMenuService;
+import me.chanjar.weixin.mp.api.WxMpMerchantInvoiceService;
+import me.chanjar.weixin.mp.api.WxMpQrcodeService;
+import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.api.WxMpShakeService;
+import me.chanjar.weixin.mp.api.WxMpStoreService;
+import me.chanjar.weixin.mp.api.WxMpSubscribeMsgService;
+import me.chanjar.weixin.mp.api.WxMpTemplateMsgService;
+import me.chanjar.weixin.mp.api.WxMpUserBlacklistService;
+import me.chanjar.weixin.mp.api.WxMpUserService;
+import me.chanjar.weixin.mp.api.WxMpUserTagService;
+import me.chanjar.weixin.mp.api.WxMpWifiService;
+import me.chanjar.weixin.mp.api.WxOAuth2Service;
 import me.chanjar.weixin.mp.bean.WxMpSemanticQuery;
 import me.chanjar.weixin.mp.bean.result.WxMpCurrentAutoReplyInfo;
-import me.chanjar.weixin.mp.bean.result.WxMpOAuth2AccessToken;
 import me.chanjar.weixin.mp.bean.result.WxMpSemanticQueryResult;
-import me.chanjar.weixin.mp.bean.result.WxMpUser;
 import me.chanjar.weixin.mp.config.WxMpConfigStorage;
 import me.chanjar.weixin.mp.enums.WxMpApiUrl;
 import me.chanjar.weixin.mp.util.WxMpConfigStorageHolder;
@@ -40,7 +64,14 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
-import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.*;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.CLEAR_QUOTA_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.GET_CALLBACK_IP_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.GET_CURRENT_AUTOREPLY_INFO_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.GET_TICKET_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.NETCHECK_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.QRCONNECT_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.SEMANTIC_SEMPROXY_SEARCH_URL;
+import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.SHORTURL_API_URL;
 
 /**
  * 基础实现类.
@@ -49,76 +80,76 @@ import static me.chanjar.weixin.mp.enums.WxMpApiUrl.Other.*;
  */
 @Slf4j
 public abstract class BaseWxMpServiceImpl<H, P> implements WxMpService, RequestHttp<H, P> {
-  protected WxSessionManager sessionManager = new StandardSessionManager();
+  protected     WxSessionManager           sessionManager         = new StandardSessionManager();
   @Getter
   @Setter
-  private WxMpKefuService kefuService = new WxMpKefuServiceImpl(this);
+  private       WxMpKefuService            kefuService            = new WxMpKefuServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMaterialService materialService = new WxMpMaterialServiceImpl(this);
+  private       WxMpMaterialService        materialService        = new WxMpMaterialServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMenuService menuService = new WxMpMenuServiceImpl(this);
+  private       WxMpMenuService            menuService            = new WxMpMenuServiceImpl(this);
   @Getter
   @Setter
-  private WxMpUserService userService = new WxMpUserServiceImpl(this);
+  private       WxMpUserService            userService            = new WxMpUserServiceImpl(this);
   @Getter
   @Setter
-  private WxMpUserTagService userTagService = new WxMpUserTagServiceImpl(this);
+  private       WxMpUserTagService         userTagService         = new WxMpUserTagServiceImpl(this);
   @Getter
   @Setter
-  private WxMpQrcodeService qrcodeService = new WxMpQrcodeServiceImpl(this);
+  private       WxMpQrcodeService          qrcodeService          = new WxMpQrcodeServiceImpl(this);
   @Getter
   @Setter
-  private WxMpCardService cardService = new WxMpCardServiceImpl(this);
+  private       WxMpCardService            cardService            = new WxMpCardServiceImpl(this);
   @Getter
   @Setter
-  private WxMpStoreService storeService = new WxMpStoreServiceImpl(this);
+  private       WxMpStoreService           storeService           = new WxMpStoreServiceImpl(this);
   @Getter
   @Setter
-  private WxMpDataCubeService dataCubeService = new WxMpDataCubeServiceImpl(this);
+  private       WxMpDataCubeService        dataCubeService        = new WxMpDataCubeServiceImpl(this);
   @Getter
   @Setter
-  private WxMpUserBlacklistService blackListService = new WxMpUserBlacklistServiceImpl(this);
+  private       WxMpUserBlacklistService   blackListService       = new WxMpUserBlacklistServiceImpl(this);
   @Getter
   @Setter
-  private WxMpTemplateMsgService templateMsgService = new WxMpTemplateMsgServiceImpl(this);
+  private       WxMpTemplateMsgService     templateMsgService     = new WxMpTemplateMsgServiceImpl(this);
   @Getter
   @Setter
-  private final WxMpSubscribeMsgService subscribeMsgService = new WxMpSubscribeMsgServiceImpl(this);
+  private final WxMpSubscribeMsgService    subscribeMsgService    = new WxMpSubscribeMsgServiceImpl(this);
   @Getter
   @Setter
-  private WxMpDeviceService deviceService = new WxMpDeviceServiceImpl(this);
+  private       WxMpDeviceService          deviceService          = new WxMpDeviceServiceImpl(this);
   @Getter
   @Setter
-  private WxMpShakeService shakeService = new WxMpShakeServiceImpl(this);
+  private       WxMpShakeService           shakeService           = new WxMpShakeServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMemberCardService memberCardService = new WxMpMemberCardServiceImpl(this);
+  private       WxMpMemberCardService      memberCardService      = new WxMpMemberCardServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMassMessageService massMessageService = new WxMpMassMessageServiceImpl(this);
+  private       WxMpMassMessageService     massMessageService     = new WxMpMassMessageServiceImpl(this);
   @Getter
   @Setter
-  private WxMpAiOpenService aiOpenService = new WxMpAiOpenServiceImpl(this);
+  private       WxMpAiOpenService          aiOpenService          = new WxMpAiOpenServiceImpl(this);
   @Getter
   @Setter
-  private final WxMpWifiService wifiService = new WxMpWifiServiceImpl(this);
+  private final WxMpWifiService            wifiService            = new WxMpWifiServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMarketingService marketingService = new WxMpMarketingServiceImpl(this);
+  private       WxMpMarketingService       marketingService       = new WxMpMarketingServiceImpl(this);
   @Getter
   @Setter
-  private WxMpCommentService commentService = new WxMpCommentServiceImpl(this);
+  private       WxMpCommentService         commentService         = new WxMpCommentServiceImpl(this);
   @Getter
   @Setter
-  private WxOcrService ocrService = new WxMpOcrServiceImpl(this);
+  private       WxOcrService               ocrService             = new WxMpOcrServiceImpl(this);
   @Getter
   @Setter
-  private WxImgProcService imgProcService = new WxMpImgProcServiceImpl(this);
+  private       WxImgProcService           imgProcService         = new WxMpImgProcServiceImpl(this);
   @Getter
   @Setter
-  private WxMpMerchantInvoiceService merchantInvoiceService = new WxMpMerchantInvoiceServiceImpl(this, this.cardService);
+  private       WxMpMerchantInvoiceService merchantInvoiceService = new WxMpMerchantInvoiceServiceImpl(this, this.cardService);
 
   @Getter
   @Setter
@@ -127,7 +158,7 @@ public abstract class BaseWxMpServiceImpl<H, P> implements WxMpService, RequestH
   private Map<String, WxMpConfigStorage> configStorageMap;
 
   private int retrySleepMillis = 1000;
-  private int maxRetryTimes = 5;
+  private int maxRetryTimes    = 5;
 
   @Override
   public boolean checkSignature(String timestamp, String nonce, String signature) {
@@ -147,23 +178,26 @@ public abstract class BaseWxMpServiceImpl<H, P> implements WxMpService, RequestH
 
   @Override
   public String getTicket(TicketType type, boolean forceRefresh) throws WxErrorException {
-    Lock lock = this.getWxMpConfigStorage().getTicketLock(type);
-    lock.lock();
-    try {
-      if (forceRefresh) {
-        this.getWxMpConfigStorage().expireTicket(type);
-      }
+    if (forceRefresh) {
+      this.getWxMpConfigStorage().expireTicket(type);
+    }
 
-      if (this.getWxMpConfigStorage().isTicketExpired(type)) {
-        String responseContent = execute(SimpleGetRequestExecutor.create(this),
-          GET_TICKET_URL.getUrl(this.getWxMpConfigStorage()) + type.getCode(), null);
-        JsonObject tmpJsonObject = GsonParser.parse(responseContent);
-        String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
-        int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
-        this.getWxMpConfigStorage().updateTicket(type, jsapiTicket, expiresInSeconds);
+    if (this.getWxMpConfigStorage().isTicketExpired(type)) {
+      Lock lock = this.getWxMpConfigStorage().getTicketLock(type);
+      lock.lock();
+      try {
+        // 拿到锁之后，再次判断一下最新的token是否过期，避免重刷
+        if (this.getWxMpConfigStorage().isTicketExpired(type)) {
+          String responseContent = execute(SimpleGetRequestExecutor.create(this),
+            GET_TICKET_URL.getUrl(this.getWxMpConfigStorage()) + type.getCode(), null);
+          JsonObject tmpJsonObject = GsonParser.parse(responseContent);
+          String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
+          int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
+          this.getWxMpConfigStorage().updateTicket(type, jsapiTicket, expiresInSeconds);
+        }
+      } finally {
+        lock.unlock();
       }
-    } finally {
-      lock.unlock();
     }
 
     return this.getWxMpConfigStorage().getTicket(type);

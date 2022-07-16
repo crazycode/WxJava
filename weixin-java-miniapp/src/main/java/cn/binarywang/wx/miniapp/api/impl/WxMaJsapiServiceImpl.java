@@ -32,22 +32,25 @@ public class WxMaJsapiServiceImpl implements WxMaJsapiService {
 
   @Override
   public String getCardApiTicket(boolean forceRefresh) throws WxErrorException {
-    Lock lock = this.wxMaService.getWxMaConfig().getCardApiTicketLock();
-    lock.lock();
-    try {
-      if (forceRefresh) {
-        this.wxMaService.getWxMaConfig().expireCardApiTicket();
-      }
+    if (forceRefresh) {
+      this.wxMaService.getWxMaConfig().expireCardApiTicket();
+    }
 
-      if (this.wxMaService.getWxMaConfig().isCardApiTicketExpired()) {
-        String responseContent = this.wxMaService.get(GET_JSAPI_TICKET_URL + "?type=wx_card", null);
-        JsonObject tmpJsonObject = GsonParser.parse(responseContent);
-        String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
-        int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
-        this.wxMaService.getWxMaConfig().updateCardApiTicket(jsapiTicket, expiresInSeconds);
+    if (this.wxMaService.getWxMaConfig().isCardApiTicketExpired()) {
+      Lock lock = this.wxMaService.getWxMaConfig().getCardApiTicketLock();
+      lock.lock();
+      try {
+        // 再次判断是否过期，避免重复刷新
+        if (this.wxMaService.getWxMaConfig().isCardApiTicketExpired()) {
+          String responseContent = this.wxMaService.get(GET_JSAPI_TICKET_URL + "?type=wx_card", null);
+          JsonObject tmpJsonObject = GsonParser.parse(responseContent);
+          String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
+          int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
+          this.wxMaService.getWxMaConfig().updateCardApiTicket(jsapiTicket, expiresInSeconds);
+        }
+      } finally {
+        lock.unlock();
       }
-    } finally {
-      lock.unlock();
     }
     return this.wxMaService.getWxMaConfig().getCardApiTicket();
   }
@@ -59,22 +62,25 @@ public class WxMaJsapiServiceImpl implements WxMaJsapiService {
 
   @Override
   public String getJsapiTicket(boolean forceRefresh) throws WxErrorException {
-    Lock lock = this.wxMaService.getWxMaConfig().getJsapiTicketLock();
-    lock.lock();
-    try {
-      if (forceRefresh) {
-        this.wxMaService.getWxMaConfig().expireJsapiTicket();
-      }
+    if (forceRefresh) {
+      this.wxMaService.getWxMaConfig().expireJsapiTicket();
+    }
 
-      if (this.wxMaService.getWxMaConfig().isJsapiTicketExpired()) {
-        String responseContent = this.wxMaService.get(GET_JSAPI_TICKET_URL + "?type=jsapi", null);
-        JsonObject tmpJsonObject = GsonParser.parse(responseContent);
-        String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
-        int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
-        this.wxMaService.getWxMaConfig().updateJsapiTicket(jsapiTicket, expiresInSeconds);
+    if (this.wxMaService.getWxMaConfig().isJsapiTicketExpired()) {
+      Lock lock = this.wxMaService.getWxMaConfig().getJsapiTicketLock();
+      lock.lock();
+      try {
+        // 再次判断是否过期，避免重复刷新
+        if (this.wxMaService.getWxMaConfig().isJsapiTicketExpired()) {
+          String responseContent = this.wxMaService.get(GET_JSAPI_TICKET_URL + "?type=jsapi", null);
+          JsonObject tmpJsonObject = GsonParser.parse(responseContent);
+          String jsapiTicket = tmpJsonObject.get("ticket").getAsString();
+          int expiresInSeconds = tmpJsonObject.get("expires_in").getAsInt();
+          this.wxMaService.getWxMaConfig().updateJsapiTicket(jsapiTicket, expiresInSeconds);
+        }
+      } finally {
+        lock.unlock();
       }
-    } finally {
-      lock.unlock();
     }
     return this.wxMaService.getWxMaConfig().getJsapiTicket();
   }
